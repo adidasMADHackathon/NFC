@@ -5,13 +5,23 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.MifareUltralight
 import android.os.Bundle
+import android.os.Handler
 import android.provider.Settings
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import java.io.IOException
+import android.widget.TextView
+
+
+
 
 
 class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
+
+    private var textView: TextView? = null
+    private var handler: Handler? = null
+    private lateinit var mRunnable:Runnable
+    private var content = ""
 
 
     companion object {
@@ -44,8 +54,16 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
             }
         } else {
             nfcAdapter.enableReaderMode(this, this, READER_FLAGS, null)
-
         }
+
+        handler = Handler() // Initialize the Handler from the Main Thread
+
+        // Task for updating the UI
+        mRunnable = Runnable {
+            textView = findViewById<TextView>(R.id.textNFC)
+            textView?.text = content
+        }
+
     }
 
     override fun onPause() {
@@ -62,21 +80,30 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         }
     }
 
+    /*
+     * Read info from the tag
+     */
     private fun readUltralight(tag: Tag) {
         val ultralightTag = MifareUltralight.get(tag)
         ultralightTag.use { ultralight ->
             ultralight.connect()
             try {
                 var page = 0
-                while (true) {
+                // Clear the old tag data
+                content = ""
+
+                while (page < 35) {
                     val asString = String(ultralight.readPages(page++))
+                    content += asString
                     println(asString)
                 }
+
+                // Launch the task for updating the UI
+                handler?.post(mRunnable)
+
             } catch (_: IndexOutOfBoundsException) {
             } catch (_: IOException) {
             }
         }
-
     }
-
 }
