@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     }
 
     /*
-     * Read info from the tag
+     * Read data from the tag
      */
     private fun readUltralight(tag: Tag) {
         val ultralightTag = MifareUltralight.get(tag)
@@ -103,6 +103,29 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
 
             } catch (_: IndexOutOfBoundsException) {
             } catch (_: IOException) {
+            }
+        }
+    }
+
+    /*
+     * Read data to the tag
+     */
+    private fun writeOnMifareUltralightC(tag: Tag,
+                                 pageData: String, pageNumber: Int) {
+        var ultralightTag: MifareUltralight? = null
+
+        try {
+            ultralightTag = MifareUltralight.get(tag)
+            ultralightTag!!.connect()
+            ultralightTag.writePage(pageNumber, pageData.toByteArray(charset("US-ASCII")))
+
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        } finally {
+            try {
+                ultralightTag!!.close()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
             }
         }
     }
